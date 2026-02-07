@@ -1,0 +1,68 @@
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+Desktop.ini
+nul
+
+# iOS / Xcode (legacy)
+_legacy/EasyStreet/xcuserdata/
+_legacy/EasyStreet/*.xcworkspace/xcuserdata/
+*.xcuserstate
+DerivedData/
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Android (legacy)
+_legacy/EasyStreet_Android/.gradle/
+_legacy/EasyStreet_Android/build/
+_legacy/EasyStreet_Android/app/build/
+_legacy/EasyStreet_Android/local.properties
+*.apk
+*.aab
+
+# IDE
+.idea/
+*.iml
+
+# Secrets
+*.keystore
+*.jks
+google-services.json
+gradle.properties
+
+# Claude Code
+.claude/settings.local.json
+.claude.json
+
+# Xcode user data
+xcuserdata/
+
+# SQLite temporary files
+*.db-shm
+*.db-wal
+*.db-journal
+
+# Node / Bun / Turborepo
+node_modules/
+.turbo/
+dist/
+bun.lock
+
+# Next.js
+.next/
+
+# Expo
+.expo/
+apps/mobile/ios/
+apps/mobile/android/
+
+# Convex
+packages/backend/.env.local
+
+# Environment
+.env
+.env.local
+.env.*.local

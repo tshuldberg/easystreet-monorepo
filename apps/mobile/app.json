@@ -1,0 +1,39 @@
+{
+  "expo": {
+    "name": "EasyStreet",
+    "slug": "easystreet",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "easystreet",
+    "platforms": ["ios"],
+    "newArchEnabled": true,
+    "experiments": {
+      "typedRoutes": true
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "EasyStreet uses your location to find nearby street sweeping schedules and mark where you parked.",
+          "locationWhenInUsePermission": "EasyStreet uses your location to find nearby street sweeping schedules and mark where you parked."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "sounds": []
+        }
+      ]
+    ],
+    "ios": {
+      "bundleIdentifier": "com.easystreet.app",
+      "supportsTablet": false,
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "EasyStreet uses your location to find nearby street sweeping schedules and mark where you parked.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "EasyStreet uses your location to provide background parking alerts before street sweeping.",
+        "UIBackgroundModes": ["location", "fetch"]
+      }
+    }
+  }
+}

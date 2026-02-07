@@ -1,0 +1,23 @@
+{
+  "name": "@repo/backend",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "exports": {
+    "./convex/_generated/api": "./convex/_generated/api.js"
+  },
+  "scripts": {
+    "dev": "npx convex dev",
+    "deploy": "npx convex deploy",
+    "seed": "npx convex run seed:seedFromCSV",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "convex": "^1.18.0"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "csv-parse": "^5.6.0",
+    "typescript": "^5.7.0"
+  }
+}
