@@ -18,6 +18,8 @@ export const setPreferences = mutation({
         deviceId: v.string(),
         hasSeenDisclaimer: v.optional(v.boolean()),
         notificationLeadMinutes: v.optional(v.number()),
+        notificationLeadMinutesSet: v.optional(v.array(v.number())),
+        activeCityCode: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
         const existing = await ctx.db
@@ -33,6 +35,13 @@ export const setPreferences = mutation({
             if (args.notificationLeadMinutes !== undefined) {
                 updates.notificationLeadMinutes = args.notificationLeadMinutes;
             }
+            if (args.notificationLeadMinutesSet !== undefined) {
+                updates.notificationLeadMinutesSet =
+                    args.notificationLeadMinutesSet;
+            }
+            if (args.activeCityCode !== undefined) {
+                updates.activeCityCode = args.activeCityCode;
+            }
             await ctx.db.patch(existing._id, updates);
             return existing._id;
         }
@@ -41,6 +50,8 @@ export const setPreferences = mutation({
             deviceId: args.deviceId,
             hasSeenDisclaimer: args.hasSeenDisclaimer ?? false,
             notificationLeadMinutes: args.notificationLeadMinutes ?? 60,
+            notificationLeadMinutesSet: args.notificationLeadMinutesSet,
+            activeCityCode: args.activeCityCode,
         });
     },
 });

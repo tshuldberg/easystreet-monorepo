@@ -43,6 +43,7 @@ export default defineSchema({
         streetName: v.optional(v.string()),
         parkedAt: v.number(),
         notificationLeadMinutes: v.number(),
+        notificationLeadMinutesSet: v.optional(v.array(v.number())),
         segmentId: v.optional(v.string()),
     }).index("by_deviceId", ["deviceId"]),
 
@@ -50,5 +51,7 @@ export default defineSchema({
         deviceId: v.string(),
         hasSeenDisclaimer: v.boolean(),
         notificationLeadMinutes: v.number(),
+        notificationLeadMinutesSet: v.optional(v.array(v.number())),
+        activeCityCode: v.optional(v.string()),
     }).index("by_deviceId", ["deviceId"]),
 });

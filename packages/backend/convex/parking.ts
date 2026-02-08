@@ -20,6 +20,7 @@ export const parkCar = mutation({
         longitude: v.number(),
         streetName: v.optional(v.string()),
         notificationLeadMinutes: v.number(),
+        notificationLeadMinutesSet: v.optional(v.array(v.number())),
         segmentId: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
@@ -40,6 +41,7 @@ export const parkCar = mutation({
             streetName: args.streetName,
             parkedAt: Date.now(),
             notificationLeadMinutes: args.notificationLeadMinutes,
+            notificationLeadMinutesSet: args.notificationLeadMinutesSet,
             segmentId: args.segmentId,
         });
     },
@@ -51,6 +53,8 @@ export const updateParkedLocation = mutation({
         deviceId: v.string(),
         latitude: v.number(),
         longitude: v.number(),
+        streetName: v.optional(v.string()),
+        segmentId: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
         const existing = await ctx.db
@@ -62,6 +66,8 @@ export const updateParkedLocation = mutation({
         await ctx.db.patch(existing._id, {
             latitude: args.latitude,
             longitude: args.longitude,
+            streetName: args.streetName,
+            segmentId: args.segmentId,
         });
         return existing._id;
     },

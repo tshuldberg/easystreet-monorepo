@@ -1,10 +1,14 @@
 import { useRef, useCallback } from "react";
 import { View } from "react-native";
 import MapView, { Polyline, Marker, type Region } from "react-native-maps";
-import { getMapColorStatus, MAP_COLORS, SF_CENTER } from "@repo/shared";
+import {
+    getMapColorStatus,
+    getMapColorsForCity,
+    getCityConfig,
+} from "@repo/shared";
 
 interface Segment {
-    _id: string;
+    _id?: string;
     segmentId: string;
     streetName: string;
     coordinates: { latitude: number; longitude: number }[];
@@ -23,6 +27,11 @@ interface MapDisplayProps {
     userLocation: { latitude: number; longitude: number } | null;
     onRegionChange: (region: Region) => void;
     onSegmentPress: (segmentId: string) => void;
+    onParkedLocationDragEnd?: (location: {
+        latitude: number;
+        longitude: number;
+    }) => void;
+    cityCode?: string;
 }
 
 export function MapDisplay({
@@ -31,9 +40,13 @@ export function MapDisplay({
     userLocation,
     onRegionChange,
     onSegmentPress,
+    onParkedLocationDragEnd,
+    cityCode,
 }: MapDisplayProps) {
     const mapRef = useRef<MapView>(null);
     const now = new Date();
+    const mapColors = getMapColorsForCity(cityCode);
+    const cityCenter = getCityConfig(cityCode).center;
 
     const handleRegionChangeComplete = useCallback(
         (region: Region) => {
@@ -48,14 +61,15 @@ export function MapDisplay({
                 ref={mapRef}
                 className="flex-1"
                 initialRegion={{
-                    latitude: userLocation?.latitude ?? SF_CENTER.latitude,
+                    latitude: userLocation?.latitude ?? cityCenter.latitude,
                     longitude:
-                        userLocation?.longitude ?? SF_CENTER.longitude,
+                        userLocation?.longitude ?? cityCenter.longitude,
                     latitudeDelta: 0.02,
                     longitudeDelta: 0.02,
                 }}
                 showsUserLocation
                 showsMyLocationButton
+                userInterfaceStyle="light"
                 onRegionChangeComplete={handleRegionChangeComplete}
             >
                 {segments.map((seg) => {
@@ -67,9 +81,9 @@ export function MapDisplay({
 
                     return (
                         <Polyline
-                            key={seg._id}
+                            key={seg._id ?? seg.segmentId}
                             coordinates={coords}
-                            strokeColor={MAP_COLORS[color]}
+                            strokeColor={mapColors[color]}
                             strokeWidth={4}
                             tappable
                             onPress={() => onSegmentPress(seg.segmentId)}
@@ -82,6 +96,11 @@ export function MapDisplay({
                         coordinate={parkedLocation}
                         title="My Car"
                         draggable
+                        onDragEnd={(e) =>
+                            onParkedLocationDragEnd?.(
+                                e.nativeEvent.coordinate,
+                            )
+                        }
                     />
                 )}
             </MapView>

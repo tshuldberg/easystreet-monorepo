@@ -12,17 +12,29 @@ export function useLocation(): Coordinate | null {
 
     useEffect(() => {
         (async () => {
-            const { status } =
-                await Location.requestForegroundPermissionsAsync();
-            if (status !== "granted") return;
+            try {
+                const { status } =
+                    await Location.requestForegroundPermissionsAsync();
+                if (status !== "granted") return;
 
-            const loc = await Location.getCurrentPositionAsync({
-                accuracy: Location.Accuracy.Balanced,
-            });
-            setLocation({
-                latitude: loc.coords.latitude,
-                longitude: loc.coords.longitude,
-            });
+                const lastKnown = await Location.getLastKnownPositionAsync();
+                if (lastKnown?.coords) {
+                    setLocation({
+                        latitude: lastKnown.coords.latitude,
+                        longitude: lastKnown.coords.longitude,
+                    });
+                }
+
+                const loc = await Location.getCurrentPositionAsync({
+                    accuracy: Location.Accuracy.Balanced,
+                });
+                setLocation({
+                    latitude: loc.coords.latitude,
+                    longitude: loc.coords.longitude,
+                });
+            } catch {
+                // Keep null location and let callers use fallback behavior.
+            }
         })();
     }, []);
 

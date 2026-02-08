@@ -1,23 +1,29 @@
 import { View, Text } from "react-native";
-import { MAP_COLORS } from "@repo/shared";
+import { getMapColorsForCity } from "@repo/shared";
 
-const items = [
-    { color: MAP_COLORS.red, label: "Today" },
-    { color: MAP_COLORS.orange, label: "Tomorrow" },
-    { color: MAP_COLORS.yellow, label: "2-3 days" },
-    { color: MAP_COLORS.green, label: "Clear" },
-];
+export function Legend({ cityCode }: { cityCode?: string }) {
+    const colors = getMapColorsForCity(cityCode);
+    const items = [
+        { color: colors.red, label: "Today" },
+        { color: colors.orange, label: "Tomorrow" },
+        { color: colors.yellow, label: "2-3 days" },
+        { color: colors.green, label: "Clear" },
+    ];
 
-export function Legend() {
     return (
-        <View className="absolute right-4 top-24 rounded-xl bg-white/90 p-2.5 shadow-lg">
+        <View className="absolute right-4 top-24 rounded-2xl border border-white/80 bg-white/92 p-3 shadow-lg">
             {items.map((item) => (
-                <View key={item.label} className="mb-1 flex-row items-center gap-1.5">
+                <View
+                    key={item.label}
+                    className="mb-1.5 flex-row items-center gap-2"
+                >
                     <View
                         className="h-2.5 w-5 rounded-sm"
                         style={{ backgroundColor: item.color }}
                     />
-                    <Text className="text-xs text-gray-600">{item.label}</Text>
+                    <Text className="text-xs font-medium text-gray-700">
+                        {item.label}
+                    </Text>
                 </View>
             ))}
         </View>

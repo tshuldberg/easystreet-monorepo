@@ -23,10 +23,15 @@ export default function StreetDetailScreen() {
     }
 
     return (
-        <SafeAreaView className="flex-1 bg-white">
-            <View className="flex-row items-center justify-between border-b border-gray-100 px-4 py-3">
-                <Pressable onPress={() => router.back()}>
-                    <Text className="text-lg text-blue-600">Back</Text>
+        <SafeAreaView className="flex-1 bg-[#F2F2F7]">
+            <View className="flex-row items-center justify-between border-b border-gray-100 bg-white/95 px-4 py-3">
+                <Pressable
+                    onPress={() => router.back()}
+                    className="rounded-full bg-gray-100 px-3 py-1 active:bg-gray-200"
+                >
+                    <Text className="text-sm font-semibold text-blue-600">
+                        Back
+                    </Text>
                 </Pressable>
                 <Text className="text-lg font-bold text-gray-900">
                     Street Detail
