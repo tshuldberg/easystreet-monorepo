@@ -30,7 +30,7 @@ export interface CityConfig {
 }
 
 /** Current rollout is San Francisco only; structure supports future cities. */
-export const CITY_CONFIGS: Record<string, CityConfig> = {
+export const CITY_CONFIGS = {
     sf: {
         code: "sf",
         name: "San Francisco",
@@ -46,7 +46,7 @@ export const CITY_CONFIGS: Record<string, CityConfig> = {
         },
         colors: MAP_COLORS,
     },
-} as const;
+} as const satisfies Record<string, CityConfig>;
 
 export const DEFAULT_CITY_CODE: CityCode = "sf";
 
@@ -95,8 +95,11 @@ export const DEFAULT_NOTIFICATION_LEAD_MINUTES =
 export const NOTIFICATION_LEAD_OPTIONS = CUSTOM_NOTIFICATION_LEAD_OPTIONS;
 
 export function getCityConfig(code: string | undefined): CityConfig {
-    if (!code) return CITY_CONFIGS.sf;
-    return CITY_CONFIGS[code] ?? CITY_CONFIGS.sf;
+    const fallbackCity = CITY_CONFIGS.sf;
+    if (!code) return fallbackCity;
+
+    const cityConfigsByCode: Record<string, CityConfig> = CITY_CONFIGS;
+    return cityConfigsByCode[code] ?? fallbackCity;
 }
 
 export function getMapColorsForCity(code: string | undefined): typeof MAP_COLORS {

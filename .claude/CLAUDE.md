@@ -4,6 +4,11 @@ Dual-platform mobile app helping San Francisco residents avoid parking tickets b
 
 See @README.md for detailed project overview.
 
+## Instruction Sync (Critical)
+
+- Keep `/Users/trey/Desktop/Apps/Parks/easystreet-monorepo/.claude/CLAUDE.md` and `/Users/trey/Desktop/Apps/Parks/easystreet-monorepo/AGENTS.md` synchronized for persistent project rules.
+- Any new rule or rule change must be applied in both files in the same change.
+
 ---
 
 ## Project Structure
@@ -738,6 +743,23 @@ head -n 10 EasyStreet/Street_Sweeping_Schedule_20260206.csv
 ## Additional Resources
 
 - **Development timeline**: @timeline.md (READ THIS FIRST - required for all sessions)
+- **Data architecture**: @.claude/docs/data-models.md (erDiagram + system flowchart)
 - Project documentation: @README.md
 - iOS requirements: @EasyStreet/Reqs.md
 - Development notes: @EasyStreet/StreetSweepingAppDevelopment.md
+
+### Minimal Data Model (quick reference)
+
+```mermaid
+erDiagram
+    STREET_SEGMENT ||--o{ SWEEPING_RULE : "rules"
+    STREET_SEGMENT ||--|{ COORDINATE : "coords"
+    PARKED_CAR }o--o| STREET_SEGMENT : "segment"
+    USER_PREFERENCES ||--o{ NOTIFICATION_LEAD_SET : "leads"
+```
+
+---
+
+## Workspace Skills
+
+- `/daily-report-ops` — Daily/ad-hoc reporting with strict naming + PR triage workflow (workspace skill)

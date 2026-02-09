@@ -1,4 +1,4 @@
-import { useRef, useCallback } from "react";
+import { useRef, useCallback, useMemo } from "react";
 import { View } from "react-native";
 import MapView, { Polyline, Marker, type Region } from "react-native-maps";
 import {
@@ -44,9 +44,21 @@ export function MapDisplay({
     cityCode,
 }: MapDisplayProps) {
     const mapRef = useRef<MapView>(null);
-    const now = new Date();
     const mapColors = getMapColorsForCity(cityCode);
     const cityCenter = getCityConfig(cityCode).center;
+    const dayKey = new Date().toDateString();
+
+    const segmentsWithColors = useMemo(() => {
+        const referenceDate = new Date(dayKey);
+        return segments.map((segment) => ({
+            segment,
+            color: getMapColorStatus(segment.rules, referenceDate),
+            coordinates: segment.coordinates.map((coordinate) => ({
+                latitude: coordinate.latitude,
+                longitude: coordinate.longitude,
+            })),
+        }));
+    }, [dayKey, segments]);
 
     const handleRegionChangeComplete = useCallback(
         (region: Region) => {
@@ -72,24 +84,16 @@ export function MapDisplay({
                 userInterfaceStyle="light"
                 onRegionChangeComplete={handleRegionChangeComplete}
             >
-                {segments.map((seg) => {
-                    const color = getMapColorStatus(seg.rules, now);
-                    const coords = seg.coordinates.map((c) => ({
-                        latitude: c.latitude,
-                        longitude: c.longitude,
-                    }));
-
-                    return (
-                        <Polyline
-                            key={seg._id ?? seg.segmentId}
-                            coordinates={coords}
-                            strokeColor={mapColors[color]}
-                            strokeWidth={4}
-                            tappable
-                            onPress={() => onSegmentPress(seg.segmentId)}
-                        />
-                    );
-                })}
+                {segmentsWithColors.map(({ segment, color, coordinates }) => (
+                    <Polyline
+                        key={segment._id ?? segment.segmentId}
+                        coordinates={coordinates}
+                        strokeColor={mapColors[color]}
+                        strokeWidth={4}
+                        tappable
+                        onPress={() => onSegmentPress(segment.segmentId)}
+                    />
+                ))}
 
                 {parkedLocation && (
                     <Marker

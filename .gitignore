@@ -53,6 +53,7 @@ bun.lock
 
 # Next.js
 .next/
+*.tsbuildinfo
 
 # Expo
 .expo/
