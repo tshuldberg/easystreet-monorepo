@@ -36,6 +36,8 @@ function parseTime(time: string): { hours: number; minutes: number } | null {
     const hours = parseInt(parts[0]!, 10);
     const minutes = parseInt(parts[1]!, 10);
     if (isNaN(hours) || isNaN(minutes)) return null;
+    if (hours < 0 || hours > 23) return null;
+    if (minutes < 0 || minutes > 59) return null;
     return { hours, minutes };
 }
 
@@ -57,38 +59,48 @@ export function getStatus(
 ): SweepingStatus {
     if (rules.length === 0) return { type: "noData" };
 
-    // Check if sweeping is today
+    const todaySweepWindows: Array<{ start: Date; end: Date }> = [];
+    let hadParseError = false;
+
     for (const rule of rules) {
         if (!ruleAppliesTo(rule, at)) continue;
 
         const startParsed = parseTime(rule.startTime);
         const endParsed = parseTime(rule.endTime);
-        if (!startParsed || !endParsed) return { type: "unknown" };
-
-        const sweepStart = setTimeOnDate(at, startParsed.hours, startParsed.minutes);
-        const sweepEnd = setTimeOnDate(at, endParsed.hours, endParsed.minutes);
-
-        if (at >= sweepStart && at < sweepEnd) {
-            // Currently sweeping
-            return { type: "activeNow", streetName, endTime: sweepEnd };
-        }
-
-        if (at >= sweepEnd) {
-            // Sweeping already passed today — safe
+        if (!startParsed || !endParsed) {
+            hadParseError = true;
             continue;
         }
 
-        // Sweeping hasn't started yet today
-        const msRemaining = sweepStart.getTime() - at.getTime();
+        const sweepStart = setTimeOnDate(at, startParsed.hours, startParsed.minutes);
+        const sweepEnd = setTimeOnDate(at, endParsed.hours, endParsed.minutes);
+        todaySweepWindows.push({ start: sweepStart, end: sweepEnd });
+    }
+
+    if (todaySweepWindows.length === 0 && hadParseError) {
+        return { type: "unknown" };
+    }
+
+    const activeSweep = todaySweepWindows
+        .filter((window) => at >= window.start && at < window.end)
+        .sort((a, b) => a.end.getTime() - b.end.getTime())[0];
+    if (activeSweep) {
+        return { type: "activeNow", streetName, endTime: activeSweep.end };
+    }
+
+    const nextTodaySweep = todaySweepWindows
+        .filter((window) => window.start > at)
+        .sort((a, b) => a.start.getTime() - b.start.getTime())[0];
+    if (nextTodaySweep) {
+        const msRemaining = nextTodaySweep.start.getTime() - at.getTime();
         const hoursRemaining = msRemaining / (1000 * 60 * 60);
 
         if (hoursRemaining < 1) {
-            return { type: "imminent", time: sweepStart, streetName };
+            return { type: "imminent", time: nextTodaySweep.start, streetName };
         }
-        return { type: "today", time: sweepStart, streetName };
+        return { type: "today", time: nextTodaySweep.start, streetName };
     }
 
-    // No sweep today (or all today's sweeps passed) — find next
     const nextSweep = getNextSweepingTime(rules, at);
     if (nextSweep) {
         return { type: "upcoming", time: nextSweep, streetName };
@@ -107,15 +119,31 @@ export function getNextSweepingTime(
     let earliest: Date | null = null;
 
     for (const rule of rules) {
+        const startParsed = parseTime(rule.startTime);
+        if (!startParsed) continue;
+
+        const today = new Date(after);
+        today.setHours(0, 0, 0, 0);
+        if (ruleAppliesTo(rule, today)) {
+            const todaySweepStart = setTimeOnDate(
+                today,
+                startParsed.hours,
+                startParsed.minutes,
+            );
+            if (
+                todaySweepStart > after &&
+                (!earliest || todaySweepStart < earliest)
+            ) {
+                earliest = todaySweepStart;
+            }
+        }
+
         for (let dayOffset = 1; dayOffset <= 180; dayOffset++) {
             const checkDate = new Date(after);
             checkDate.setDate(checkDate.getDate() + dayOffset);
             checkDate.setHours(0, 0, 0, 0); // Normalize to start of day
 
             if (ruleAppliesTo(rule, checkDate)) {
-                const startParsed = parseTime(rule.startTime);
-                if (!startParsed) continue;
-
                 const sweepDate = setTimeOnDate(
                     checkDate,
                     startParsed.hours,

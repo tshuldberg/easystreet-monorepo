@@ -7,8 +7,10 @@
     "dev": "expo start",
     "build:ios": "eas build --platform ios",
     "prebuild": "expo prebuild",
-    "lint": "expo lint",
-    "typecheck": "tsc --noEmit"
+    "lint": "EXPO_NO_TELEMETRY=1 EXPO_HOME=.expo expo lint",
+    "typecheck": "tsc --noEmit",
+    "android": "expo run:android",
+    "ios": "expo run:ios"
   },
   "dependencies": {
     "@repo/backend": "workspace:*",
@@ -35,6 +37,8 @@
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
     "@types/react": "~19.0.0",
+    "eslint": "^9.0.0",
+    "eslint-config-expo": "~10.0.0",
     "typescript": "^5.7.0"
   }
 }

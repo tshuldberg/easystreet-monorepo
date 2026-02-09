@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import ReactMapGL, {
     Source,
     Layer,
@@ -13,7 +13,7 @@ import { getMapColorStatus, MAP_COLORS } from "@repo/shared";
 import type { MapColorStatus } from "@repo/shared";
 
 interface Segment {
-    _id: string;
+    _id?: string;
     segmentId: string;
     streetName: string;
     coordinates: { latitude: number; longitude: number }[];
@@ -41,6 +41,27 @@ interface MapProps {
 
 const TILE_URL =
     "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json";
+
+function toGeoJSON(segs: Segment[]) {
+    return {
+        type: "FeatureCollection" as const,
+        features: segs.map((seg) => ({
+            type: "Feature" as const,
+            properties: {
+                id: seg._id,
+                segmentId: seg.segmentId,
+                streetName: seg.streetName,
+            },
+            geometry: {
+                type: "LineString" as const,
+                coordinates: seg.coordinates.map((c) => [
+                    c.longitude,
+                    c.latitude,
+                ]),
+            },
+        })),
+    };
+}
 
 export function Map({
     segments,
@@ -73,39 +94,45 @@ export function Map({
         [onBoundsChange],
     );
 
-    // Group segments by color status for map layers
-    const now = new Date();
-    const colorGroups: Record<MapColorStatus, Segment[]> = {
-        red: [],
-        orange: [],
-        yellow: [],
-        green: [],
-        gray: [],
-    };
+    const dayKey = new Date().toDateString();
+    const colorGroups = useMemo(() => {
+        const grouped: Record<MapColorStatus, Segment[]> = {
+            red: [],
+            orange: [],
+            yellow: [],
+            green: [],
+            gray: [],
+        };
+        const referenceDate = new Date(dayKey);
+        for (const segment of segments) {
+            const color = getMapColorStatus(segment.rules, referenceDate);
+            grouped[color].push(segment);
+        }
+        return grouped;
+    }, [segments, dayKey]);
 
-    for (const seg of segments) {
-        const color = getMapColorStatus(seg.rules, now);
-        colorGroups[color].push(seg);
-    }
+    const geoJsonByColor = useMemo(
+        () =>
+            (Object.keys(colorGroups) as MapColorStatus[]).reduce(
+                (acc, color) => {
+                    acc[color] = toGeoJSON(colorGroups[color]);
+                    return acc;
+                },
+                {} as Record<
+                    MapColorStatus,
+                    ReturnType<typeof toGeoJSON>
+                >,
+            ),
+        [colorGroups],
+    );
 
-    const toGeoJSON = (segs: Segment[]) => ({
-        type: "FeatureCollection" as const,
-        features: segs.map((seg) => ({
-            type: "Feature" as const,
-            properties: {
-                id: seg._id,
-                segmentId: seg.segmentId,
-                streetName: seg.streetName,
-            },
-            geometry: {
-                type: "LineString" as const,
-                coordinates: seg.coordinates.map((c) => [
-                    c.longitude,
-                    c.latitude,
-                ]),
-            },
-        })),
-    });
+    const segmentsById = useMemo(
+        () =>
+            new globalThis.Map(
+                segments.map((segment) => [segment.segmentId, segment] as const),
+            ),
+        [segments],
+    );
 
     return (
         <ReactMapGL
@@ -120,9 +147,9 @@ export function Map({
                 if (features && features.length > 0) {
                     const feature = features[0];
                     const segmentId = feature?.properties?.segmentId;
-                    const seg = segments.find(
-                        (s) => s.segmentId === segmentId,
-                    );
+                    const seg = segmentId
+                        ? segmentsById.get(segmentId as string)
+                        : undefined;
                     if (seg) onSegmentClick(seg);
                 }
             }}
@@ -136,7 +163,7 @@ export function Map({
                         key={color}
                         id={`streets-${color}`}
                         type="geojson"
-                        data={toGeoJSON(segs)}
+                        data={geoJsonByColor[color]}
                     >
                         <Layer
                             id={`streets-${color}`}

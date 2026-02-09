@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { useQuery, useMutation } from "convex/react";
+import { useState, useCallback, useMemo } from "react";
+import { useConvex, useQuery, useMutation } from "convex/react";
 import { api } from "@repo/backend/convex/_generated/api";
 import { DEFAULT_NOTIFICATION_LEAD_MINUTES } from "@repo/shared";
 import { Map } from "@/components/Map";
@@ -24,8 +24,23 @@ interface SelectedSegment {
     }[];
 }
 
+interface Segment extends SelectedSegment {
+    _id?: string;
+    limits?: string;
+    coordinates: { latitude: number; longitude: number }[];
+}
+
+function toSelectedSegment(segment: SelectedSegment): SelectedSegment {
+    return {
+        segmentId: segment.segmentId,
+        streetName: segment.streetName,
+        rules: segment.rules,
+    };
+}
+
 export default function HomePage() {
     const deviceId = useDeviceId();
+    const convex = useConvex();
     const [bounds, setBounds] = useState({
         latMin: 37.74,
         latMax: 37.81,
@@ -45,11 +60,23 @@ export default function HomePage() {
         api.preferences.getPreferences,
         deviceId ? { deviceId } : "skip",
     );
+    const parkedSegment = useQuery(
+        api.streets.getSegmentById,
+        parkedCar?.segmentId ? { segmentId: parkedCar.segmentId } : "skip",
+    ) as Segment | null | undefined;
 
     const parkCar = useMutation(api.parking.parkCar);
     const updateLocation = useMutation(api.parking.updateParkedLocation);
     const clearCar = useMutation(api.parking.clearParkedCar);
     const setPrefs = useMutation(api.preferences.setPreferences);
+    const liveSegments = (segments ?? []) as Segment[];
+    const segmentsById = useMemo(
+        () =>
+            new globalThis.Map(
+                liveSegments.map((segment) => [segment.segmentId, segment] as const),
+            ),
+        [liveSegments],
+    );
 
     // Show disclaimer on first visit
     const needsDisclaimer =
@@ -69,20 +96,46 @@ export default function HomePage() {
         // Use map center as parking location
         const lat = (bounds.latMin + bounds.latMax) / 2;
         const lng = (bounds.lngMin + bounds.lngMax) / 2;
+        let nearest: Segment | null = null;
+        try {
+            nearest = (await convex.query(api.streets.findNearestSegment, {
+                latitude: lat,
+                longitude: lng,
+            })) as Segment | null;
+        } catch {
+            nearest = null;
+        }
         await parkCar({
             deviceId,
             latitude: lat,
             longitude: lng,
+            streetName: nearest?.streetName,
+            segmentId: nearest?.segmentId,
             notificationLeadMinutes: DEFAULT_NOTIFICATION_LEAD_MINUTES,
         });
-    }, [deviceId, bounds, parkCar]);
+    }, [bounds, convex, deviceId, parkCar]);
 
     const handleParkingDrag = useCallback(
         async (lat: number, lng: number) => {
             if (!deviceId) return;
-            await updateLocation({ deviceId, latitude: lat, longitude: lng });
+            let nearest: Segment | null = null;
+            try {
+                nearest = (await convex.query(api.streets.findNearestSegment, {
+                    latitude: lat,
+                    longitude: lng,
+                })) as Segment | null;
+            } catch {
+                nearest = null;
+            }
+            await updateLocation({
+                deviceId,
+                latitude: lat,
+                longitude: lng,
+                streetName: nearest?.streetName,
+                segmentId: nearest?.segmentId,
+            });
         },
-        [deviceId, updateLocation],
+        [convex, deviceId, updateLocation],
     );
 
     const handleClearParking = useCallback(async () => {
@@ -91,24 +144,32 @@ export default function HomePage() {
     }, [deviceId, clearCar]);
 
     const handleSegmentSearch = useCallback(
-        (_segmentId: string) => {
-            // Find segment in loaded data or trigger a fetch
-            const seg = segments?.find((s: SelectedSegment) => s.segmentId === _segmentId);
-            if (seg) {
-                setSelectedSegment({
-                    segmentId: seg.segmentId,
-                    streetName: seg.streetName,
-                    rules: seg.rules,
-                });
+        async (segmentId: string) => {
+            const loaded = segmentsById.get(segmentId);
+            if (loaded) {
+                setSelectedSegment(toSelectedSegment(loaded));
+                return;
+            }
+
+            let fetched: Segment | null = null;
+            try {
+                fetched = (await convex.query(api.streets.getSegmentById, {
+                    segmentId,
+                })) as Segment | null;
+            } catch {
+                fetched = null;
+            }
+            if (fetched) {
+                setSelectedSegment(toSelectedSegment(fetched));
             }
         },
-        [segments],
+        [convex, segmentsById],
     );
 
     return (
         <main className="relative h-screen w-screen">
             <Map
-                segments={segments ?? []}
+                segments={liveSegments}
                 parkedLocation={
                     parkedCar
                         ? {
@@ -118,17 +179,17 @@ export default function HomePage() {
                         : null
                 }
                 onBoundsChange={setBounds}
-                onSegmentClick={(seg) =>
-                    setSelectedSegment({
-                        segmentId: seg.segmentId,
-                        streetName: seg.streetName,
-                        rules: seg.rules,
-                    })
+                onSegmentClick={(segment) =>
+                    setSelectedSegment(toSelectedSegment(segment))
                 }
                 onParkingDrag={handleParkingDrag}
             />
 
-            <SearchBar onSelect={handleSegmentSearch} />
+            <SearchBar
+                onSelect={(segmentId) => {
+                    void handleSegmentSearch(segmentId);
+                }}
+            />
             <Legend />
 
             {/* Park Here button */}
@@ -146,9 +207,9 @@ export default function HomePage() {
                 <ParkingCard
                     streetName={parkedCar.streetName ?? null}
                     rules={
-                        segments?.find(
-                            (s: SelectedSegment) => s.segmentId === parkedCar.segmentId,
-                        )?.rules ?? []
+                        parkedSegment?.rules ??
+                        segmentsById.get(parkedCar.segmentId ?? "")?.rules ??
+                        []
                     }
                     parkedAt={parkedCar.parkedAt}
                     onClear={handleClearParking}

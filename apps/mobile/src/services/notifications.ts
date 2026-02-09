@@ -38,7 +38,6 @@ export async function ensureParkingNotificationPermissions(): Promise<boolean> {
                 allowAlert: true,
                 allowBadge: true,
                 allowSound: true,
-                allowAnnouncements: true,
             },
         });
         if (requested.granted) return true;
@@ -96,7 +95,10 @@ export async function scheduleParkingNotifications({
         const triggerAt = sweepStartTime.getTime() - leadMinutes * 60 * 1000;
         if (triggerAt <= now + 30_000) continue;
 
-        const trigger = new Date(triggerAt);
+        const trigger: Notifications.DateTriggerInput = {
+            type: Notifications.SchedulableTriggerInputTypes.DATE,
+            date: new Date(triggerAt),
+        };
         const id = await Notifications.scheduleNotificationAsync({
             content: {
                 title: "Street Sweeping Reminder",

@@ -978,3 +978,92 @@ Two agents worked simultaneously on independent file sets:
 ---
 
 *End of timeline. Total: 44 commits across 15 sessions + 2 appendices, Feb 4–6, 2026.*
+
+---
+
+## Session 16: 2026-02-09 — Monorepo Production Hardening Pass
+
+**Session Type**: Development / Release Readiness  
+**Participants**: Trey Shuldberg, Codex (AI Assistant)
+
+### Objective
+Finalize current web/mobile/shared reliability and build-tooling updates, then validate monorepo quality gates for release readiness.
+
+### Technical Changes
+1. **Instruction and architecture docs**
+   - Added project-level `AGENTS.md` with monorepo-specific guardrails.
+   - Synced instruction rule updates into `.claude/CLAUDE.md`.
+   - Added `.claude/docs/data-models.md` with ER + flow diagrams and referenced it from Claude docs.
+   - Updated `.claude/settings.json` permission policy.
+
+2. **Web app data and interaction hardening**
+   - Updated `apps/web/src/app/page.tsx` to:
+     - resolve parked-car segment details via `getSegmentById`,
+     - fetch nearest segment on park and drag updates (`findNearestSegment`),
+     - improve segment selection via local map and fallback query lookup.
+   - Updated `apps/web/src/components/Map.tsx` to:
+     - memoize daily color grouping and GeoJSON generation,
+     - avoid repeated per-render recomputation,
+     - optimize click resolution via segment lookup map.
+
+3. **Mobile app stability and lint/tooling improvements**
+   - Updated `apps/mobile/app/index.tsx` notification scheduling effect to clear stale scheduled signatures when parked car/rules/next sweep are absent and only commit signature after successful scheduling.
+   - Updated `apps/mobile/src/components/MapDisplay.tsx` to memoize per-day color/coordinate transforms for improved render stability.
+   - Updated `apps/mobile/src/services/notifications.ts` to use explicit Expo date trigger type and removed unsupported announcement permission flag.
+   - Added mobile lint/tooling config updates:
+     - `apps/mobile/.gitignore`
+     - `apps/mobile/eslint.config.mjs`
+     - `apps/mobile/uniwind-types.d.ts`
+     - script updates in `apps/mobile/package.json`.
+
+4. **Shared domain logic robustness**
+   - Updated `packages/shared/src/sweepingRuleEngine.ts`:
+     - stricter time parsing bounds checks,
+     - safer handling of malformed rules,
+     - same-day sweep inclusion in next-sweep lookup,
+     - deterministic selection across multiple same-day rules.
+   - Added tests in `packages/shared/src/sweepingRuleEngine.test.ts` covering same-day lookup, unsorted rules, active sweep windows, and malformed time handling.
+   - Updated `packages/shared/src/constants.ts` typing around city config lookup safety.
+   - Added shared lint config and package metadata updates.
+
+5. **Repo hygiene**
+   - Added `.gitignore` rule for `*.tsbuildinfo` to avoid generated TypeScript build artifacts entering source control.
+
+### Files Touched
+- `/Users/trey/Desktop/Apps/Parks/easystreet-monorepo/.claude/CLAUDE.md`
+- `/Users/trey/Desktop/Apps/Parks/easystreet-monorepo/.claude/settings.json`
+- `/Users/trey/Desktop/Apps/Parks/easystreet-monorepo/.claude/docs/data-models.md`
+- `/Users/trey/Desktop/Apps/Parks/easystreet-monorepo/AGENTS.md`
+- `/Users/trey/Desktop/Apps/Parks/easystreet-monorepo/.gitignore`
+- `/Users/trey/Desktop/Apps/Parks/easystreet-monorepo/apps/web/src/app/page.tsx`
+- `/Users/trey/Desktop/Apps/Parks/easystreet-monorepo/apps/web/src/components/Map.tsx`
+- `/Users/trey/Desktop/Apps/Parks/easystreet-monorepo/apps/web/package.json`
+- `/Users/trey/Desktop/Apps/Parks/easystreet-monorepo/apps/web/.eslintrc.json`
+- `/Users/trey/Desktop/Apps/Parks/easystreet-monorepo/apps/web/next-env.d.ts`
+- `/Users/trey/Desktop/Apps/Parks/easystreet-monorepo/apps/mobile/app/index.tsx`
+- `/Users/trey/Desktop/Apps/Parks/easystreet-monorepo/apps/mobile/src/components/MapDisplay.tsx`
+- `/Users/trey/Desktop/Apps/Parks/easystreet-monorepo/apps/mobile/src/services/notifications.ts`
+- `/Users/trey/Desktop/Apps/Parks/easystreet-monorepo/apps/mobile/package.json`
+- `/Users/trey/Desktop/Apps/Parks/easystreet-monorepo/apps/mobile/.gitignore`
+- `/Users/trey/Desktop/Apps/Parks/easystreet-monorepo/apps/mobile/eslint.config.mjs`
+- `/Users/trey/Desktop/Apps/Parks/easystreet-monorepo/apps/mobile/uniwind-types.d.ts`
+- `/Users/trey/Desktop/Apps/Parks/easystreet-monorepo/packages/shared/src/constants.ts`
+- `/Users/trey/Desktop/Apps/Parks/easystreet-monorepo/packages/shared/src/sweepingRuleEngine.ts`
+- `/Users/trey/Desktop/Apps/Parks/easystreet-monorepo/packages/shared/src/sweepingRuleEngine.test.ts`
+- `/Users/trey/Desktop/Apps/Parks/easystreet-monorepo/packages/shared/package.json`
+- `/Users/trey/Desktop/Apps/Parks/easystreet-monorepo/packages/shared/eslint.config.mjs`
+
+### Validation
+- `bun run lint` ✅ (non-blocking warnings only)
+- `bun run typecheck` ✅
+- `bun run test` ✅
+
+### Lint Warnings (Non-blocking)
+- React hook dependency warnings in:
+  - `apps/mobile/app/index.tsx`
+  - `apps/web/src/app/page.tsx`
+- Existing array-type style warning in `apps/mobile/src/components/SearchBar.tsx`
+
+### Next Steps
+1. Resolve remaining hook-dependency lint warnings for zero-warning CI.
+2. Run web/mobile manual smoke checks (`park`, `drag`, `segment search`, `notification scheduling`) before external beta rollout.

@@ -526,17 +526,27 @@ export default function HomeScreen() {
     );
 
     useEffect(() => {
-        if (!activeParkedCar) {
+        const clearScheduledNotifications = () => {
             scheduledSignatureRef.current = null;
             void cancelScheduledParkingNotifications();
+        };
+
+        if (!activeParkedCar) {
+            clearScheduledNotifications();
             return;
         }
 
         const rules = parkedSegment?.rules ?? [];
-        if (rules.length === 0) return;
+        if (rules.length === 0) {
+            clearScheduledNotifications();
+            return;
+        }
 
         const nextSweep = getNextSweepingTime(rules);
-        if (!nextSweep) return;
+        if (!nextSweep) {
+            clearScheduledNotifications();
+            return;
+        }
 
         const leads = normalizeLeadMinutesSet(activeLeadMinutesSet);
         const signature = [
@@ -549,11 +559,12 @@ export default function HomeScreen() {
             return;
         }
 
-        scheduledSignatureRef.current = signature;
         let cancelled = false;
         (async () => {
             const granted = await ensureParkingNotificationPermissions();
-            if (!granted || cancelled) return;
+            if (!granted || cancelled) {
+                return;
+            }
 
             await scheduleParkingNotifications({
                 streetName:
@@ -563,6 +574,9 @@ export default function HomeScreen() {
                 sweepStartTime: nextSweep,
                 leadMinutesSet: leads,
             });
+            if (!cancelled) {
+                scheduledSignatureRef.current = signature;
+            }
         })();
 
         return () => {
