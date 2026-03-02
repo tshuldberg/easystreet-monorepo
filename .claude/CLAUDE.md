@@ -760,6 +760,62 @@ erDiagram
 
 ---
 
+## Context7 — Live Documentation
+
+When writing or modifying code that uses external libraries, automatically use Context7 MCP tools (`resolve-library-id` → `query-docs`) to fetch current documentation instead of relying on training data.
+
+**Pre-resolved library IDs for this project:**
+- Expo: `/expo/expo`
+- Next.js: `/vercel/next.js`
+- Convex: `/get-convex/convex`
+
+Use when: implementing library APIs, upgrading dependencies, debugging API behavior, writing framework configuration.
+Skip when: pure business logic, editing docs/config with no framework dependency.
+
 ## Workspace Skills
 
 - `/daily-report-ops` — Daily/ad-hoc reporting with strict naming + PR triage workflow (workspace skill)
+
+## Parallel Agent Work
+
+File ownership zones for safe concurrent agent work:
+
+| Agent Role | Owned Paths |
+|------------|-------------|
+| Web agent | `apps/web/` (Next.js app: `src/app/`, `src/components/`, `src/hooks/`) |
+| Mobile agent | `apps/mobile/` (Expo app: `app/`, `src/`, `app.json`, `metro.config.js`) |
+| Backend agent | `packages/backend/` (Convex schema and functions: `convex/`) |
+| Shared agent | `packages/shared/` (domain logic: `src/sweepingRuleEngine.ts`, `src/holidayCalculator.ts`, `src/types.ts`, `src/constants.ts`, `src/countdownFormatter.ts`) |
+| Config agent | `turbo.json`, `package.json`, `packages/eslint-config/`, `packages/typescript-config/` |
+| Docs agent | `timeline.md`, `README.md`, `docs/`, `.claude/CLAUDE.md`, `AGENTS.md` |
+
+**Rules:**
+- Each file belongs to exactly one zone
+- Never have two agents editing the same file simultaneously
+- `packages/shared/` is imported by both web and mobile -- only the Shared agent edits it; Web and Mobile agents read only
+- `packages/backend/convex/schema.ts` defines the data model -- only the Backend agent modifies it; other agents consume via generated types
+- After completing work, run `bun run lint && bun run typecheck && bun run test` before marking the plan done
+
+### Agent Teams Strategy
+When `/dispatch` detects 2+ plans targeting this project with overlapping scope, it creates an Agent Team instead of parallel subagents. Custom agent definitions from `/Users/trey/Desktop/Apps/.claude/agents/` are available:
+- `plan-executor` — Execute plan phases with testing and verification
+- `test-writer` — Write tests without modifying source code
+- `docs-agent` — Update documentation (CLAUDE.md, timeline, diagrams)
+- `reviewer` — Read-only code review and quality gates (uses Sonnet)
+
+
+## Writing Style
+- Do not use em dashes in documents or writing.
+
+
+### Code Intelligence
+
+Prefer LSP over Grep/Read for code navigation - it's faster, precise, and avoids reading entire files:
+- `workspaceSymbol` to find where something is defined
+- `findReferences` to see all usages across the codebase
+- `goToDefinition` / `goToImplementation` to jump to source
+- `hover` for type info without reading the file
+
+Use Grep only when LSP isn't available or for text/pattern searches (comments, strings, config).
+
+After writing or editing code, check LSP diagnostics and fix errors before proceeding.

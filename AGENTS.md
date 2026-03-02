@@ -85,6 +85,50 @@ Before completion:
 - Keep local credential files gitignored.
 - Do not commit `.claude.json` if it contains MCP/API credentials.
 
+## Parallel Agent Work
+
+File ownership zones for safe concurrent agent work:
+
+| Agent Role | Owned Paths |
+|------------|-------------|
+| Web agent | `apps/web/` |
+| Mobile agent | `apps/mobile/` |
+| Backend agent | `packages/backend/` |
+| Shared agent | `packages/shared/` |
+| Config agent | `turbo.json`, `package.json`, `packages/eslint-config/`, `packages/typescript-config/` |
+| Docs agent | `timeline.md`, `README.md`, `docs/`, `.claude/CLAUDE.md`, `AGENTS.md` |
+
+**Rules:**
+- Each file belongs to exactly one zone
+- Never have two agents editing the same file simultaneously
+- `packages/shared/` is imported by web and mobile -- only the Shared agent edits it; others read only
+- `packages/backend/convex/schema.ts` defines the data model -- only the Backend agent modifies it
+- After completing work, run `bun run lint && bun run typecheck && bun run test` before marking done
+
+## Context7 — Live Documentation
+
+Automatically use Context7 MCP to fetch current library docs when writing code that uses external frameworks. Pre-resolved IDs:
+- Expo: `/expo/expo`
+- Next.js: `/vercel/next.js`
+- Convex: `/get-convex/convex`
+
 ## Workspace Skill
 
 - `/daily-report-ops` — `/Users/trey/Desktop/Apps/.claude/skills/daily-report-ops/SKILL.md`
+
+
+## Writing Style
+- Do not use em dashes in documents or writing.
+
+
+### Code Intelligence
+
+Prefer LSP over Grep/Read for code navigation - it's faster, precise, and avoids reading entire files:
+- `workspaceSymbol` to find where something is defined
+- `findReferences` to see all usages across the codebase
+- `goToDefinition` / `goToImplementation` to jump to source
+- `hover` for type info without reading the file
+
+Use Grep only when LSP isn't available or for text/pattern searches (comments, strings, config).
+
+After writing or editing code, check LSP diagnostics and fix errors before proceeding.
