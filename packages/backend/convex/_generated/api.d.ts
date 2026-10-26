@@ -12,6 +12,7 @@ type ActionRef = FunctionReference<"action">;
 interface Api {
     streets: {
         getSegmentsInBounds: QueryRef;
+        getSegmentsPage: QueryRef;
         getSegmentById: QueryRef;
         searchStreets: QueryRef;
         findNearestSegment: QueryRef;
@@ -28,9 +29,15 @@ interface Api {
     };
     seed: {
         seedFromCSV: ActionRef;
-        insertBatch: MutationRef;
+    };
+}
+
+interface Internal {
+    seed: {
+        insertBatch: FunctionReference<"mutation", "internal">;
     };
 }
 
 declare const api: Api;
-export { api };
+declare const internal: Internal;
+export { api, internal };

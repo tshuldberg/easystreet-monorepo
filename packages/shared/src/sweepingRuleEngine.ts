@@ -11,12 +11,15 @@ import type { SweepingRule, SweepingStatus, MapColorStatus } from "./types";
  * Matches Swift SweepingRule.appliesTo(date:).
  */
 export function ruleAppliesTo(rule: SweepingRule, date: Date): boolean {
+    // Holiday rules ignore the weekday and week of month: they apply on every holiday.
+    if (rule.kind === "holiday") return isHoliday(date);
+
     // dayOfWeek: 1=Sunday in our model, JS getDay() returns 0=Sunday
     const jsDay = date.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
     const ruleDay = jsDay + 1; // Convert to 1=Sun, 2=Mon, ..., 7=Sat
     if (ruleDay !== rule.dayOfWeek) return false;
 
-    // Check week of month if specified
+    // Week of month = nth occurrence of the weekday (days 1-7 = 1st, 8-14 = 2nd, ...).
     if (rule.weeksOfMonth.length > 0) {
         const dayOfMonth = date.getDate();
         const weekOfMonth = Math.ceil(dayOfMonth / 7);
@@ -81,9 +84,7 @@ export function getStatus(
         return { type: "unknown" };
     }
 
-    const activeSweep = todaySweepWindows
-        .filter((window) => at >= window.start && at < window.end)
-        .sort((a, b) => a.end.getTime() - b.end.getTime())[0];
+    const activeSweep = mergedActiveWindow(todaySweepWindows, at);
     if (activeSweep) {
         return { type: "activeNow", streetName, endTime: activeSweep.end };
     }
@@ -106,6 +107,34 @@ export function getStatus(
         return { type: "upcoming", time: nextSweep, streetName };
     }
     return { type: "safe" };
+}
+
+/**
+ * The window in progress at `at`, extended across back-to-back or overlapping
+ * windows so `end` is when the street is actually clear (matches iOS
+ * StreetSegment.activeWindow).
+ */
+export function mergedActiveWindow(
+    windows: Array<{ start: Date; end: Date }>,
+    at: Date,
+): { start: Date; end: Date } | null {
+    const sorted = windows
+        .filter((w) => w.end > w.start)
+        .sort((a, b) => a.start.getTime() - b.start.getTime());
+    const first = sorted.find((w) => at >= w.start && at < w.end);
+    if (!first) return null;
+    let active = { start: first.start, end: first.end };
+    let extended = true;
+    while (extended) {
+        extended = false;
+        for (const w of sorted) {
+            if (w.start <= active.end && w.end > active.end) {
+                active = { start: active.start < w.start ? active.start : w.start, end: w.end };
+                extended = true;
+            }
+        }
+    }
+    return active;
 }
 
 /**

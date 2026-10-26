@@ -1,4 +1,5 @@
-import * as FileSystem from "expo-file-system";
+// SDK 54 moved this function-style API to expo-file-system/legacy.
+import * as FileSystem from "expo-file-system/legacy";
 
 export interface OfflineTilePackConfig {
     cityCode: string;

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Alert, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-import { useConvex, useMutation, useQuery } from "convex/react";
+import { useConvex, useQuery } from "convex/react";
 import { api } from "@repo/backend/convex/_generated/api";
 import {
     DEFAULT_CITY_CODE,
@@ -10,6 +10,7 @@ import {
     DEFAULT_NOTIFICATION_LEAD_MINUTES_SET,
     getCityConfig,
     getNextSweepingTime,
+    PARKING_SERVER_SYNC,
     type Bounds,
     type SweepingRule,
 } from "@repo/shared";
@@ -20,6 +21,7 @@ import { Legend } from "@/components/Legend";
 import { DisclaimerModal } from "@/components/DisclaimerModal";
 import { NotificationSettingsModal } from "@/components/NotificationSettingsModal";
 import { useDeviceId } from "@/hooks/useDeviceId";
+import { useSyncMutation } from "@/hooks/useSyncMutation";
 import { useLocation } from "@/hooks/useLocation";
 import {
     loadLocalLeadMinutesSet,
@@ -118,17 +120,17 @@ export default function HomeScreen() {
     const segmentsQuery = useQuery(api.streets.getSegmentsInBounds, bounds);
     const parkedCarQuery = useQuery(
         api.parking.getParkedCar,
-        deviceId ? { deviceId } : "skip",
+        PARKING_SERVER_SYNC && deviceId ? { deviceId } : "skip",
     );
     const preferencesQuery = useQuery(
         api.preferences.getPreferences,
-        deviceId ? { deviceId } : "skip",
+        PARKING_SERVER_SYNC && deviceId ? { deviceId } : "skip",
     );
 
-    const parkCar = useMutation(api.parking.parkCar);
-    const updateLocation = useMutation(api.parking.updateParkedLocation);
-    const clearCar = useMutation(api.parking.clearParkedCar);
-    const setPrefs = useMutation(api.preferences.setPreferences);
+    const parkCar = useSyncMutation(api.parking.parkCar);
+    const updateLocation = useSyncMutation(api.parking.updateParkedLocation);
+    const clearCar = useSyncMutation(api.parking.clearParkedCar);
+    const setPrefs = useSyncMutation(api.preferences.setPreferences);
 
     const activeParkedCar: LocalParkedCarSnapshot | null = useMemo(() => {
         if (parkedCarQuery === undefined) return localParkedCar;
@@ -333,14 +335,19 @@ export default function HomeScreen() {
             const boundsTiles = buildBoundsTiles(cityConfig.bounds, 4, 4);
             let merged: Segment[] = [];
 
+            // Page through every tile so the offline cache covers the whole city.
             for (const tile of boundsTiles) {
                 if (cancelled) return;
+                let cursor: string | null = null;
                 try {
-                    const tileSegments = (await convex.query(
-                        api.streets.getSegmentsInBounds,
-                        tile,
-                    )) as Segment[];
-                    merged = mergeSegments(merged, tileSegments);
+                    do {
+                        const page = (await convex.query(api.streets.getSegmentsPage, {
+                            ...tile,
+                            paginationOpts: { numItems: 500, cursor },
+                        })) as { page: Segment[]; isDone: boolean; continueCursor: string };
+                        merged = mergeSegments(merged, page.page);
+                        cursor = page.isDone ? null : page.continueCursor;
+                    } while (cursor && !cancelled);
                 } catch {
                     break;
                 }

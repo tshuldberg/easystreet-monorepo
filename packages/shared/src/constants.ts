@@ -105,3 +105,10 @@ export function getCityConfig(code: string | undefined): CityConfig {
 export function getMapColorsForCity(code: string | undefined): typeof MAP_COLORS {
     return getCityConfig(code).colors;
 }
+
+/**
+ * Server sync of the parked car and preferences (Convex). Off: EasyStreet keeps
+ * parking state on the device, as the privacy policy says. Turning it on is a
+ * product and privacy decision (the policy must change first).
+ */
+export const PARKING_SERVER_SYNC = false;

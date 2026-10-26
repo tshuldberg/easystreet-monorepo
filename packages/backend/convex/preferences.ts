@@ -1,13 +1,16 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
+import { hashDeviceKey } from "../../shared/src/deviceKey";
 
 /** Get user preferences for a device. */
 export const getPreferences = query({
     args: { deviceId: v.string() },
     handler: async (ctx, args) => {
+        // Only the SHA-256 of the device key is stored or compared.
+        const owner = await hashDeviceKey(args.deviceId);
         return await ctx.db
             .query("userPreferences")
-            .withIndex("by_deviceId", (q) => q.eq("deviceId", args.deviceId))
+            .withIndex("by_deviceId", (q) => q.eq("deviceId", owner))
             .first();
     },
 });
@@ -22,9 +25,11 @@ export const setPreferences = mutation({
         activeCityCode: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
+        // Only the SHA-256 of the device key is stored or compared.
+        const owner = await hashDeviceKey(args.deviceId);
         const existing = await ctx.db
             .query("userPreferences")
-            .withIndex("by_deviceId", (q) => q.eq("deviceId", args.deviceId))
+            .withIndex("by_deviceId", (q) => q.eq("deviceId", owner))
             .first();
 
         if (existing) {
@@ -47,7 +52,7 @@ export const setPreferences = mutation({
         }
 
         return await ctx.db.insert("userPreferences", {
-            deviceId: args.deviceId,
+            deviceId: owner,
             hasSeenDisclaimer: args.hasSeenDisclaimer ?? false,
             notificationLeadMinutes: args.notificationLeadMinutes ?? 60,
             notificationLeadMinutesSet: args.notificationLeadMinutesSet,

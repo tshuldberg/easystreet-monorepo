@@ -3,15 +3,24 @@
  * Ported from Swift: StreetSweepingData.swift, ParkedCar.swift, SweepingRuleEngine.swift
  */
 
+/**
+ * "weekly" rules repeat on a weekday. "holiday" rules are the source data's
+ * WeekDay = "Holiday" rows: the block is swept on every public holiday during
+ * these hours, even where the weekday rule is suspended for the holiday.
+ */
+export type SweepingRuleKind = "weekly" | "holiday";
+
 /** Street sweeping rule for a specific street segment */
 export interface SweepingRule {
-    /** 1 = Sunday, 2 = Monday, ..., 7 = Saturday (matches JS Date.getDay()+1) */
+    /** Defaults to "weekly" when absent (data seeded before holiday rules existed). */
+    kind?: SweepingRuleKind;
+    /** 1 = Sunday, 2 = Monday, ..., 7 = Saturday (matches JS Date.getDay()+1); 0 for holiday rules */
     dayOfWeek: number;
     /** 24-hour format "HH:MM" */
     startTime: string;
     /** 24-hour format "HH:MM" */
     endTime: string;
-    /** e.g., [1, 3] for 1st and 3rd weeks, or [] for every week */
+    /** nth weekday of the month, e.g. [1, 3] = 1st and 3rd; [] = every week */
     weeksOfMonth: number[];
     /** true if sweeping occurs even on holidays */
     applyOnHolidays: boolean;
@@ -89,6 +98,10 @@ const DAY_NAMES = [
 ] as const;
 
 /** Get user-friendly day name from dayOfWeek (1=Sunday, 7=Saturday) */
+export function getRuleDayName(rule: { kind?: SweepingRuleKind; dayOfWeek: number }): string {
+    return rule.kind === "holiday" ? "Holidays" : getDayName(rule.dayOfWeek);
+}
+
 export function getDayName(dayOfWeek: number): string {
     if (dayOfWeek < 1 || dayOfWeek > 7) return "Unknown";
     return DAY_NAMES[dayOfWeek - 1]!;
@@ -109,7 +122,9 @@ export function formatTimeRange(startTime: string, endTime: string): string {
 
 /** Get text description of which weeks a rule applies to */
 export function getWeeksDescription(weeksOfMonth: number[]): string {
-    if (weeksOfMonth.length === 0) return "Every week";
+    if (weeksOfMonth.length === 0 || [1, 2, 3, 4, 5].every((w) => weeksOfMonth.includes(w))) {
+        return "Every week";
+    }
     const ordinals = ["1st", "2nd", "3rd", "4th", "5th"];
     const weekNames = weeksOfMonth
         .filter((w) => w >= 1 && w <= ordinals.length)

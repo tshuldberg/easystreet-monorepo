@@ -1,13 +1,16 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
+import { hashDeviceKey } from "../../shared/src/deviceKey";
 
 /** Get the current parked car for a device. */
 export const getParkedCar = query({
     args: { deviceId: v.string() },
     handler: async (ctx, args) => {
+        // Only the SHA-256 of the device key is stored or compared.
+        const owner = await hashDeviceKey(args.deviceId);
         return await ctx.db
             .query("parkedCars")
-            .withIndex("by_deviceId", (q) => q.eq("deviceId", args.deviceId))
+            .withIndex("by_deviceId", (q) => q.eq("deviceId", owner))
             .first();
     },
 });
@@ -24,10 +27,12 @@ export const parkCar = mutation({
         segmentId: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
+        // Only the SHA-256 of the device key is stored or compared.
+        const owner = await hashDeviceKey(args.deviceId);
         // Remove existing parked car for this device
         const existing = await ctx.db
             .query("parkedCars")
-            .withIndex("by_deviceId", (q) => q.eq("deviceId", args.deviceId))
+            .withIndex("by_deviceId", (q) => q.eq("deviceId", owner))
             .first();
         if (existing) {
             await ctx.db.delete(existing._id);
@@ -35,7 +40,7 @@ export const parkCar = mutation({
 
         // Insert new
         return await ctx.db.insert("parkedCars", {
-            deviceId: args.deviceId,
+            deviceId: owner,
             latitude: args.latitude,
             longitude: args.longitude,
             streetName: args.streetName,
@@ -57,9 +62,11 @@ export const updateParkedLocation = mutation({
         segmentId: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
+        // Only the SHA-256 of the device key is stored or compared.
+        const owner = await hashDeviceKey(args.deviceId);
         const existing = await ctx.db
             .query("parkedCars")
-            .withIndex("by_deviceId", (q) => q.eq("deviceId", args.deviceId))
+            .withIndex("by_deviceId", (q) => q.eq("deviceId", owner))
             .first();
         if (!existing) return null;
 
@@ -77,9 +84,11 @@ export const updateParkedLocation = mutation({
 export const clearParkedCar = mutation({
     args: { deviceId: v.string() },
     handler: async (ctx, args) => {
+        // Only the SHA-256 of the device key is stored or compared.
+        const owner = await hashDeviceKey(args.deviceId);
         const existing = await ctx.db
             .query("parkedCars")
-            .withIndex("by_deviceId", (q) => q.eq("deviceId", args.deviceId))
+            .withIndex("by_deviceId", (q) => q.eq("deviceId", owner))
             .first();
         if (existing) {
             await ctx.db.delete(existing._id);

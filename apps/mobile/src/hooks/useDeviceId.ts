@@ -1,15 +1,22 @@
 import { useState, useEffect } from "react";
 import * as SecureStore from "expo-secure-store";
+import { generateDeviceKey, isValidDeviceKey } from "@repo/shared";
 
 const STORAGE_KEY = "easystreet_device_id";
 
-/** Generate a simple UUID v4. */
+/**
+ * A 128-bit device key from a secure random source. It doubles as the local
+ * storage namespace and, if server sync is ever enabled, as the capability the
+ * backend checks (it stores only a hash).
+ */
 function generateId(): string {
-    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
-        const r = (Math.random() * 16) | 0;
-        const v = c === "x" ? r : (r & 0x3) | 0x8;
-        return v.toString(16);
-    });
+    const cryptoSource = (globalThis as { crypto?: { getRandomValues?: (a: Uint8Array) => Uint8Array } }).crypto;
+    if (cryptoSource?.getRandomValues) {
+        return generateDeviceKey((a) => cryptoSource.getRandomValues!(a));
+    }
+    // No secure source: the key is then only a local storage namespace, because
+    // server sync (PARKING_SERVER_SYNC) is off and the backend refuses weak keys.
+    return generateDeviceKey((a) => a.map(() => Math.floor(Math.random() * 256)));
 }
 
 /** Generate or retrieve a stable anonymous device ID from secure storage. */
@@ -19,7 +26,7 @@ export function useDeviceId(): string | null {
     useEffect(() => {
         (async () => {
             let id = await SecureStore.getItemAsync(STORAGE_KEY);
-            if (!id) {
+            if (!id || !isValidDeviceKey(id)) {
                 id = generateId();
                 await SecureStore.setItemAsync(STORAGE_KEY, id);
             }

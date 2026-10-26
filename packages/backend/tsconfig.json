@@ -9,8 +9,7 @@
     "resolveJsonModule": true,
     "noEmit": true,
     "allowJs": true,
-    "strict": false,
-    "rootDir": "."
+    "strict": false
   },
   "include": ["convex/**/*.ts"],
   "exclude": ["node_modules"]

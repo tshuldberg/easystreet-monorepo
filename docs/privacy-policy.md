@@ -1,63 +1,60 @@
-# EasyStreet Privacy Policy
+# EasyStreet Privacy Policy (cross-platform app)
 
-**Last Updated:** February 6, 2026
+> DRAFT for approval (2026-10-24), for the Expo/Next.js/Convex version only. The native
+> iOS app has its own policy. Fill [PUBLISHER_NAME], [SUPPORT_EMAIL], [EFFECTIVE_DATE]
+> before publishing. If `PARKING_SERVER_SYNC` is ever turned on, this policy must be
+> updated first.
 
-## Overview
+**Effective date:** [EFFECTIVE_DATE]
+**Publisher:** [PUBLISHER_NAME]
 
-EasyStreet is a street sweeping parking assistant for San Francisco. This privacy policy explains how the app handles your data. In short: your data stays on your device, and we do not collect, transmit, or share any personal information.
+## The short version
 
-## Location Data
+Your parked car, reminders and settings stay on your device. To draw street cleaning
+schedules, the app asks our backend for the streets inside the map area you are looking
+at. Those requests are not stored or linked to you.
 
-- EasyStreet requests access to your location **only while the app is in use** ("When In Use" permission).
-- Your location is used solely to display nearby street sweeping schedules and to record where you parked your car.
-- Location data is stored **locally on your device** using the iOS UserDefaults system.
-- Location data is **never transmitted** to any server, third party, or external service.
-- You can revoke location access at any time through iOS Settings.
+## What stays on your device
 
-## Notification Preferences
+- Your parked car's location, street name and time parked (secure storage on the phone,
+  local storage in the browser).
+- Reminder settings and scheduled local notifications.
+- A random device key used to keep that data separate on the device. It is not sent
+  anywhere while server sync is off.
 
-- EasyStreet may request permission to send local push notifications to remind you of upcoming street sweeping near your parked car.
-- Notification preferences and scheduling are handled **entirely on your device** using the iOS local notification system.
-- No notification data is sent to any external server.
+## What the backend receives
 
-## Data Collection
+- **Map area requests**: the corners of the visible map (and, for the offline cache, the
+  city's tiles) so it can return street segments and schedules. Map areas are not
+  stored with any identifier and are not used to track you.
+- **Street search**: the text you type, to find matching streets.
+- Our backend runs on Convex (convex.dev), which processes these requests for us.
 
-- EasyStreet does **not** collect any personal identifiers (name, email, phone number, etc.).
-- EasyStreet does **not** use analytics, crash reporting, or any tracking frameworks.
-- EasyStreet does **not** communicate with any server or external API.
-- EasyStreet does **not** contain any advertising or ad-tracking SDKs.
-- All app functionality operates entirely offline on your device.
+Parked car locations are **not** sent to the backend.
 
-## Street Sweeping Data
+## Location
 
-- Street sweeping schedule data displayed in EasyStreet is sourced from the **City and County of San Francisco's Open Data Portal** ([data.sfgov.org](https://data.sfgov.org)).
-- This data is published under the **Public Domain Dedication and License (PDDL)** and is freely available to the public.
-- The data is bundled within the app at build time and is not downloaded or updated from a server during app use.
+The app uses your location on your device to center the map, find the nearest street
+and save where you parked. Background location (if you allow it) is used only for
+reminders about your parked car.
 
-## Data Storage
+## Maps
 
-- Parked car location (latitude, longitude, street name, timestamp) is stored in iOS UserDefaults on your device.
-- Street sweeping schedule data is stored in a bundled SQLite database within the app.
-- No data is stored in the cloud or on any remote server.
+The iOS app shows Apple Maps (react-native-maps); the web app shows its map provider's
+tiles. Those providers receive the map area needed to draw tiles under their own
+privacy policies.
 
-## Third-Party Services
+## Street cleaning data
 
-EasyStreet does not integrate with any third-party services, SDKs, or APIs. The app uses only native Apple frameworks (MapKit, CoreLocation, UserNotifications).
+Schedules come from DataSF ("Street Sweeping Schedule", San Francisco Public Works),
+published under the Open Data Commons Public Domain Dedication and License. Posted signs
+take precedence over the app.
 
-## Children's Privacy
+## What we collect
 
-EasyStreet does not knowingly collect any information from children under the age of 13. The app does not collect information from any user of any age.
-
-## Changes to This Policy
-
-If we update this privacy policy, the revised version will be posted at this URL with an updated "Last Updated" date. Continued use of the app after changes constitutes acceptance of the revised policy.
+No accounts, no analytics, no advertising, no tracking, and no sale or sharing of
+personal data.
 
 ## Contact
 
-If you have questions or concerns about this privacy policy, please contact us at:
-
-**Email:** easystreet.app@gmail.com
-
----
-
-*This privacy policy applies to the EasyStreet iOS application available on the Apple App Store.*
+[SUPPORT_EMAIL]

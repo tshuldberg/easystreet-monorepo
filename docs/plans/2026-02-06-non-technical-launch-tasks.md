@@ -97,7 +97,7 @@ The privacy policy is already written (see `docs/privacy-policy.md`). It needs t
 Once hosted, paste the URL into App Store Connect's "Privacy Policy URL" field.
 
 ### 2.2 Set Up Support Email
-- The email `easystreet.app@gmail.com` is already referenced in the privacy policy
+- The email `[SUPPORT_EMAIL]` is already referenced in the privacy policy
 - Ensure this inbox is monitored (set up forwarding if needed)
 - Create a simple auto-reply: "Thanks for contacting EasyStreet. We'll get back to you within 48 hours."
 
@@ -197,7 +197,7 @@ Write a simple doc (Google Doc or email) for testers:
 >
 > **How to report issues:**
 > - Tap the share button in TestFlight to submit feedback
-> - Or email easystreet.app@gmail.com with a screenshot
+> - Or email [SUPPORT_EMAIL] with a screenshot
 
 ### 4.3 Collect and Organize Feedback
 - Create a simple spreadsheet with columns: Tester Name, Date, Issue/Feedback, Severity (Critical/Nice-to-have), Status
@@ -228,7 +228,7 @@ Draft answers for common questions:
 | Why didn't I get a notification? | Make sure notifications are enabled in Settings > EasyStreet. Also check that you marked your parking spot with "I Parked Here." |
 | When is sweeping suspended? | San Francisco suspends sweeping on 11 official city holidays. The app accounts for this automatically. |
 | Can I adjust notification timing? | Yes — tap the gear icon to choose 15 min, 30 min, 1 hour, or 2 hours before sweeping. |
-| The schedule for my street seems wrong | Please email us at easystreet.app@gmail.com with the street name and what your posted sign says. We'll investigate. |
+| The schedule for my street seems wrong | Please email us at [SUPPORT_EMAIL] with the street name and what your posted sign says. We'll investigate. |
 
 ### 5.2 Write a "What's New" for v1.0
 Keep it simple:

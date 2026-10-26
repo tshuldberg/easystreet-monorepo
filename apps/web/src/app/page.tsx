@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useCallback, useMemo } from "react";
-import { useConvex, useQuery, useMutation } from "convex/react";
+import { useConvex, useQuery } from "convex/react";
 import { api } from "@repo/backend/convex/_generated/api";
-import { DEFAULT_NOTIFICATION_LEAD_MINUTES } from "@repo/shared";
+import { DEFAULT_NOTIFICATION_LEAD_MINUTES, PARKING_SERVER_SYNC } from "@repo/shared";
 import { Map } from "@/components/Map";
 import { StreetDetail } from "@/components/StreetDetail";
 import { ParkingCard } from "@/components/ParkingCard";
@@ -11,6 +11,7 @@ import { DisclaimerModal } from "@/components/DisclaimerModal";
 import { SearchBar } from "@/components/SearchBar";
 import { Legend } from "@/components/Legend";
 import { useDeviceId } from "@/hooks/useDeviceId";
+import { useSyncMutation } from "@/hooks/useSyncMutation";
 
 interface SelectedSegment {
     segmentId: string;
@@ -54,21 +55,21 @@ export default function HomePage() {
     const segments = useQuery(api.streets.getSegmentsInBounds, bounds);
     const parkedCar = useQuery(
         api.parking.getParkedCar,
-        deviceId ? { deviceId } : "skip",
+        PARKING_SERVER_SYNC && deviceId ? { deviceId } : "skip",
     );
     const preferences = useQuery(
         api.preferences.getPreferences,
-        deviceId ? { deviceId } : "skip",
+        PARKING_SERVER_SYNC && deviceId ? { deviceId } : "skip",
     );
     const parkedSegment = useQuery(
         api.streets.getSegmentById,
         parkedCar?.segmentId ? { segmentId: parkedCar.segmentId } : "skip",
     ) as Segment | null | undefined;
 
-    const parkCar = useMutation(api.parking.parkCar);
-    const updateLocation = useMutation(api.parking.updateParkedLocation);
-    const clearCar = useMutation(api.parking.clearParkedCar);
-    const setPrefs = useMutation(api.preferences.setPreferences);
+    const parkCar = useSyncMutation(api.parking.parkCar);
+    const updateLocation = useSyncMutation(api.parking.updateParkedLocation);
+    const clearCar = useSyncMutation(api.parking.clearParkedCar);
+    const setPrefs = useSyncMutation(api.preferences.setPreferences);
     const liveSegments = (segments ?? []) as Segment[];
     const segmentsById = useMemo(
         () =>

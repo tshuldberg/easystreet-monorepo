@@ -22,6 +22,8 @@ export default defineSchema({
         }),
         rules: v.array(
             v.object({
+                // "holiday" = the CSV's WeekDay = Holiday rows; absent = weekly (older seeds)
+                kind: v.optional(v.union(v.literal("weekly"), v.literal("holiday"))),
                 dayOfWeek: v.number(),
                 startTime: v.string(),
                 endTime: v.string(),
@@ -37,6 +39,7 @@ export default defineSchema({
         }),
 
     parkedCars: defineTable({
+        // SHA-256 of the client's device key, never the key itself (see shared/src/deviceKey.ts)
         deviceId: v.string(),
         latitude: v.number(),
         longitude: v.number(),
@@ -48,6 +51,7 @@ export default defineSchema({
     }).index("by_deviceId", ["deviceId"]),
 
     userPreferences: defineTable({
+        // SHA-256 of the client's device key
         deviceId: v.string(),
         hasSeenDisclaimer: v.boolean(),
         notificationLeadMinutes: v.number(),

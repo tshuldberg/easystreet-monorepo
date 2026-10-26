@@ -1,5 +1,6 @@
 import { query } from "./_generated/server";
 import { v } from "convex/values";
+import { paginationOptsValidator } from "convex/server";
 
 /** Get street segments within a bounding box (for map viewport). */
 export const getSegmentsInBounds = query({
@@ -24,6 +25,34 @@ export const getSegmentsInBounds = query({
             )
             .take(500);
         return segments;
+    },
+});
+
+/**
+ * One page of segments in a bounding box. The offline cache pages through every
+ * tile until done; the viewport query above stays capped at 500 for speed. (The
+ * old cache stopped at 16 tiles x 500 = 8,000 of the city's ~22,600 block sides.)
+ */
+export const getSegmentsPage = query({
+    args: {
+        latMin: v.number(),
+        latMax: v.number(),
+        lngMin: v.number(),
+        lngMax: v.number(),
+        paginationOpts: paginationOptsValidator,
+    },
+    handler: async (ctx, args) => {
+        return await ctx.db
+            .query("streetSegments")
+            .filter((q) =>
+                q.and(
+                    q.lte(q.field("bounds.latMin"), args.latMax),
+                    q.gte(q.field("bounds.latMax"), args.latMin),
+                    q.lte(q.field("bounds.lngMin"), args.lngMax),
+                    q.gte(q.field("bounds.lngMax"), args.lngMin),
+                ),
+            )
+            .paginate(args.paginationOpts);
     },
 });
 

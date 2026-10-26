@@ -1,5 +1,6 @@
 export type {
     SweepingRule,
+    SweepingRuleKind,
     Coordinate,
     Bounds,
     StreetSegment,
@@ -11,6 +12,7 @@ export type {
 
 export {
     getDayName,
+    getRuleDayName,
     formatTimeRange,
     getWeeksDescription,
 } from "./types";
@@ -26,7 +28,11 @@ export {
     getStatus,
     getNextSweepingTime,
     getMapColorStatus,
+    mergedActiveWindow,
 } from "./sweepingRuleEngine";
+
+export { parseScheduleCSV, splitCSV, parseLineString, hourToTime } from "./scheduleParser";
+export type { ParsedSegment, ParseStats } from "./scheduleParser";
 
 export { formatCountdown } from "./countdownFormatter";
 
@@ -43,6 +49,9 @@ export {
     DEFAULT_CITY_CODE,
     getCityConfig,
     getMapColorsForCity,
+    PARKING_SERVER_SYNC,
 } from "./constants";
+
+export { generateDeviceKey, hashDeviceKey, isValidDeviceKey } from "./deviceKey";
 
 export type { CityCode, CityConfig } from "./constants";
