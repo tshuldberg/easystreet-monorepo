@@ -49,7 +49,6 @@ xcuserdata/
 node_modules/
 .turbo/
 dist/
-bun.lock
 
 # Next.js
 .next/

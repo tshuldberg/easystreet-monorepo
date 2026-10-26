@@ -10,7 +10,8 @@
     "dev": "npx convex dev",
     "deploy": "npx convex deploy",
     "seed": "npx convex run seed:seedFromCSV",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "node --test test/*.test.mjs"
   },
   "dependencies": {
     "convex": "^1.18.0"

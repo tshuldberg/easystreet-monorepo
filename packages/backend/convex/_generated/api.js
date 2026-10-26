@@ -1,6 +1,9 @@
 /* eslint-disable */
 /**
- * Stub — replaced by `npx convex dev` codegen.
+ * Runtime references use Convex's generated API implementation even before a
+ * deployment is configured. `npx convex dev` refreshes the paired type surface.
  */
-export const api = {};
-export const internal = {};
+import { anyApi } from "convex/server";
+
+export const api = anyApi;
+export const internal = anyApi;
